@@ -1,0 +1,40 @@
+/*Natalie Rodriguez*/
+/* importing */
+data IBM;
+set sashelp.stocks;
+run;
+/* sorting */
+proc sort data=IBM;
+by high;
+run;
+/* sorting in descending order */
+proc sort data=IBM;
+by descending high;
+run;
+/* display column names and variable */
+proc contents data=ibm;
+run;
+/* finding means */
+proc means data=ibm;
+run;
+/* finding correlation btwn all the numeric variables */
+PROC CORR DATA=ibm;
+    VAR Close High
+Low
+Open
+Volume;
+RUN;
+/* using where */
+data max_volume;
+set ibm;
+where volume >80000000;
+run;
+/* selecting certain column */
+proc sql;
+select close, high, low from ibm;
+run;
+/* display dataset */
+proc sql;
+select * FROM ibm;
+run;
+/* using group by */
