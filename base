@@ -24,6 +24,8 @@ Low
 Open
 Volume;
 RUN;
+
+
 /* using where */
 data max_volume;
 set ibm;
@@ -38,3 +40,72 @@ proc sql;
 select * FROM ibm;
 run;
 /* using group by */
+proc sql;
+select stock as stock_natalie, max(open) as max_natalie from ibm group by stock;
+run;
+/* using where in proc sql */
+proc sql;
+select stock, volume from ibm where volume >80000000;
+run;
+/* macro */
+Proc Print Data=Sales.Policysnapshot;
+/* maco variable */
+Where policydate=”&sysdate9”d;
+/* macro */
+Title “Below are the policy detail for %sysdate9”; 
+run;
+
+data Math_functions;
+v1=21; v2=42; v3=13; v4=10; v5=29;
+/* Get Maximum value */
+max_val = MAX(v1,v2,v3,v4,v5);
+/* Get Minimum value */
+min_val = MIN (v1,v2,v3,v4,v5);
+/* Get Median value */
+med_val = MEDIAN (v1,v2,v3,v4,v5);
+/* Get a random number */
+rand_val = RANUNI(0);
+/* Get Square root of sum of the values */
+SR_val= SQRT(sum(v1,v2,v3,v4,v5));
+proc print data = Math_functions noobs;
+run;
+/* frequency */
+proc freq data=ibm;
+table stock;
+run;
+
+/* filter the columns */
+proc print data=ibm;
+ var high close;
+ run;
+/*  keep */
+data high_close;
+set ibm;
+keep high close;
+proc print;
+run;
+/* drop */
+data natalie;
+set ibm;
+drop
+Low
+Date
+Open
+Stock
+Volume;
+proc print;
+run;
+/* if else */
+data popular_stock;
+set ibm;
+if volume >80000000 then natalie="popular_stock";
+else natalie="unpopular";
+run;
+/* if then */
+data volume_stock;
+set ibm;
+if volume <10000000 then stock_volume= "lowest";
+else if volume <40000000 and volume >10000000 then stock_volume= "medium";
+else if volume <60000000 and volume>40000000 then stock_volume= "high";
+else if volume >60000000 then stock_volume= "highest";
+run;
