@@ -1,0 +1,128 @@
+/* Predicting Fish species ( Bream and Perch) using KNN*/
+
+/*Load fish library from sas help*/
+data fish;
+set sashelp.fish;
+where species in ('Bream', 'Perch');/*on;y working with these two species of fish*/
+keep species weight height;/*only working with these two variables*/
+run;
+
+/*Understanding the data*/
+/*look at the distribution*/
+proc means data=fish nmiss n mean std min max; /*computes the summary statistics of the two features: weight and height*/
+var weight height; 
+class species; 
+run;
+
+/*Visualizing the data via scatterplot*/
+ods graphics on / attrpriority=none;
+proc sgplot data=fish;
+scatter y=height x=weight / group=species;
+styleattrs datasymbols=(circlefilled Triangle);
+run;
+
+
+/*Cleaning up the data*/
+/*When we performed a proc means, we found that bream has a missing value, we have 
+to handlein order to use KNN. Thus, we will treat the missing value by using the average weight of bream.*/
+data fish2;
+set fish;
+if species = 'Bream' and weight = . then weight = 626;
+keep species weight height;
+run;
+
+
+** Illustration **;
+data illu1 illu2;
+set fish2;
+where 500 < weight < 800;
+
+if _n_ = 9 then do;
+Species = 'Unknown';
+output illu1;
+end;
+else if _n_ = 19 then do;
+Species = 'Unknown';
+output illu2;
+end;
+
+else do;
+output illu1;
+output illu2;
+end;
+run;
+
+proc sort data=illu1; by species; run;
+proc sort data=illu2; by species; run;
+
+ods graphics on / attrpriority=none;
+proc sgplot data=illu1;
+scatter y=height x=weight / group=species;
+styleattrs datasymbols=(circlefilled Triangle square );
+xaxis min=400 max=850;
+yaxis min=8 max=18;
+run;
+
+ods graphics on / attrpriority=none;
+proc sgplot data=illu2;
+scatter y=height x=weight / group=species;
+styleattrs datasymbols=(circlefilled Triangle square );
+xaxis min=400 max=850;
+yaxis min=8 max=18;
+run;
+
+/* Splitting into Train/Test*/
+data fish_train fish_test_temp1;
+set fish2;
+rand = ranuni(100);
+if rand <= 0.8 then output fish_train;
+else output fish_test_temp1;
+run;
+
+data fish_test;
+set fish_test_temp1;
+num = _n_;
+run;
+/*code below finds the three closest species for each fish in the test set*/
+proc sql;
+create table combine_temp1 as
+select a.num, a.species as species_true,
+       b.species as species_neighbor,
+       sqrt((a.weight - b.weight)**2 + 
+            (a.height - b.height)**2    
+            ) as distance
+from fish_test a, fish_train b
+order by a.num, distance;
+quit;
+
+​data combine;
+set combine_temp1;
+by num distance;
+if first.num then i = 0;
+i + 1;
+if i <= 3;
+run;
+
+
+
+proc freq data=combine noprint;
+table species_neighbor / out = fish_freq;
+by num species_true;
+run;
+
+proc sort data=fish_freq; by num count; run;
+
+data fish_freq2;
+set fish_freq;
+by num count;
+if last.num;
+
+if species_true = species_neighbor then match = "Y";
+else match = "N";
+run;
+
+
+
+proc freq data=fish_freq2;
+table species_true*match / norow nocol nopercent;
+run;
